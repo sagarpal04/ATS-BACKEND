@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv"
 import parseRoutes from "./routes/parseRoutes.js";
-import jdRoutes from "./routes/jdRoutes.js";
 
 dotenv.config();
 
@@ -14,7 +13,6 @@ app.use(cors())
 app.use(express.json());
 
 app.use("/api", parseRoutes);
-app.use("/api", jdRoutes);
 
 app.get("/", (req, res) => {
     res.send("Server is running...");
