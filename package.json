@@ -11,6 +11,8 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@napi-rs/canvas": "^0.1.80",
+    "@sparticuz/chromium": "^143.0.4",
     "axios": "^1.13.6",
     "cheerio": "^1.2.0",
     "cors": "^2.8.6",
@@ -18,7 +20,7 @@
     "express": "^5.2.1",
     "pdf-parse": "^2.4.5",
     "puppeteer": "^24.40.0",
-    "@napi-rs/canvas": "^0.1.80",
+    "puppeteer-core": "^24.40.0",
     "serverless-http": "^4.0.0"
   },
   "devDependencies": {

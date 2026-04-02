@@ -1,4 +1,5 @@
-import puppeteer from "puppeteer";
+import puppeteerCore from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 
 export const scrapeJD = async (req, res) => {
     try {
@@ -8,26 +9,52 @@ export const scrapeJD = async (req, res) => {
             return res.status(400).json({ error: "URL is required" });
         }
 
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: ["--no-sandbox", "--disable-setuid-sandbox"],
-        });
+        const isLocal = process.env.NODE_ENV !== "production";
+
+        let browser;
+
+        // 🔥 LOCAL → use puppeteer
+        if (isLocal) {
+            const puppeteer = (await import("puppeteer")).default;
+
+            browser = await puppeteer.launch({
+                headless: true,
+            });
+        }
+        // 🔥 PRODUCTION → use chromium
+        else {
+            browser = await puppeteerCore.launch({
+                args: chromium.args,
+                executablePath: await chromium.executablePath(),
+                headless: chromium.headless,
+            });
+        }
 
         const page = await browser.newPage();
+
+        // ✅ Speed optimization
+        await page.setRequestInterception(true);
+        page.on("request", (req) => {
+            if (["image", "stylesheet", "font"].includes(req.resourceType())) {
+                req.abort();
+            } else {
+                req.continue();
+            }
+        });
 
         await page.setUserAgent(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
         );
 
+        await page.setViewport({ width: 1280, height: 800 });
+
         await page.goto(url, {
             waitUntil: "networkidle2",
-            timeout: 0,
+            timeout: 60000,
         });
 
-        // Wait for content to load
         await page.waitForSelector("body");
 
-        // Extract all visible text
         const jdText = await page.evaluate(() => {
             return document.body.innerText;
         });
@@ -41,14 +68,15 @@ export const scrapeJD = async (req, res) => {
             });
         }
 
-        res.json({
+        return res.json({
             success: true,
             text: jdText,
         });
+
     } catch (err) {
         console.error(err);
 
-        res.json({
+        return res.json({
             success: false,
             error: "Scraping failed",
         });
